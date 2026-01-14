@@ -83,6 +83,7 @@ func (s *authService) Register(countryCode, phone, password, name string) (Token
 	return Tokens{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
+		UserID:       user.ID,
 	}, nil
 }
 
@@ -126,6 +127,7 @@ func (s *authService) Login(phone, password, countryCode string) (Tokens, error)
 	return Tokens{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
+		UserID:       user.ID,
 	}, nil
 }
 

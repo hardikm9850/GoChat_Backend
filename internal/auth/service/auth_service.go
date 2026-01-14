@@ -3,6 +3,7 @@ package service
 type Tokens struct {
 	AccessToken  string
 	RefreshToken string
+	UserID       string
 }
 
 // AuthService
