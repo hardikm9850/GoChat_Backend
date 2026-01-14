@@ -56,24 +56,23 @@ func registerRoutes(
 		ws.GET("/chat", wsHandler.HandleWebSocket)
 	}
 
-	// -------- API --------
-	api := r.Group("/api")
-	api.Use(middleware.JWTAuth(*jwtManager))
+	// -------- Main API (protected)--------
+	v1Auth := r.Group("/v1")
+	v1Auth.Use(middleware.JWTAuth(*jwtManager))
 	{
-		v1 := api.Group("/v1")
+		v1Auth.GET("/me", func(c *gin.Context) {
+			userID := c.GetString("userID")
+			c.JSON(200, gin.H{"user_id": userID})
+		})
+
+		v1Auth.POST("/contacts/sync", contactsHandler.SyncContacts)
+
+		conversations := v1Auth.Group("/conversations")
 		{
-			v1.GET("/me", func(c *gin.Context) {
-				userID := c.GetString("userID")
-				c.JSON(200, gin.H{"user_id": userID})
-			})
-
-			v1.POST("/contacts/sync", contactsHandler.SyncContacts)
-
-			// -------- CONVERSATIONS --------
-			v1.POST("/conversations", conversationHandler.CreateConversation)
-			v1.GET("/conversations", conversationHandler.GetMyConversations)
-			v1.GET("/conversations/:id", conversationHandler.GetConversation)
-			r.GET("/conversations/:id/messages", messagesHandler.GetMessages)
+			conversations.POST("", conversationHandler.CreateConversation)
+			conversations.GET("", conversationHandler.GetMyConversations)
+			conversations.GET("/:id", conversationHandler.GetConversation)
+			conversations.GET("/:id/messages", messagesHandler.GetMessages)
 		}
 	}
 }
