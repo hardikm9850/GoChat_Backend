@@ -3,6 +3,7 @@ package memory
 import (
 	"errors"
 	"github.com/hardikm9850/GoChat/internal/auth/domain"
+	domain2 "github.com/hardikm9850/GoChat/internal/contacts/domain"
 	"sync"
 )
 
@@ -45,7 +46,7 @@ func (r *UserRepo) FindByMobile(mobile, countryCode string) (domain.User, error)
 	return user, nil
 }
 
-func (r *UserRepo) FindByMobiles(mobile []string) ([]domain.User, error) {
+func (r *UserRepo) FindByMobiles(mobile []domain2.PhoneKey) ([]domain.User, error) {
 	return nil, nil
 }
 

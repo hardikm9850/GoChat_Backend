@@ -5,6 +5,7 @@ import (
 	"github.com/hardikm9850/GoChat/internal/auth"
 	"github.com/hardikm9850/GoChat/internal/auth/domain"
 	"github.com/hardikm9850/GoChat/internal/auth/repository"
+	domain2 "github.com/hardikm9850/GoChat/internal/contacts/domain"
 	"gorm.io/gorm"
 	"log"
 )
@@ -64,19 +65,29 @@ func (r *UserRepository) FindByMobile(mobile, countryCode string) (domain.User, 
 	return toDomainUser(model), nil
 }
 
-func (r *UserRepository) FindByMobiles(mobiles []string) ([]domain.User, error) {
+func (r *UserRepository) FindByMobiles(phoneKeys []domain2.PhoneKey) ([]domain.User, error) {
 
-	if len(mobiles) == 0 {
+	if len(phoneKeys) == 0 {
 		return []domain.User{}, nil
+	}
+	combinedKeys := make([]string, len(phoneKeys))
+
+	for i, pk := range phoneKeys {
+		combinedKeys[i] = pk.CountryCode + pk.Phone
+	}
+
+	query := r.db.Model(&UserModel{})
+
+	for i, pk := range phoneKeys {
+		if i == 0 {
+			query = query.Where("(country_code = ? AND phone_number = ?)", pk.CountryCode, pk.Phone)
+		} else {
+			query = query.Or("(country_code = ? AND phone_number = ?)", pk.CountryCode, pk.Phone)
+		}
 	}
 
 	var models []UserModel
-
-	err := r.db.
-		Where("phone_number IN ?", mobiles).
-		Find(&models).
-		Error
-
+	err := query.Find(&models).Error
 	if err != nil {
 		return nil, err
 	}
@@ -88,6 +99,7 @@ func (r *UserRepository) FindByMobiles(mobiles []string) ([]domain.User, error) 
 			ID:          m.ID,
 			PhoneNumber: m.PhoneNumber,
 			Name:        m.Name,
+			CountryCode: m.CountryCode,
 		})
 	}
 

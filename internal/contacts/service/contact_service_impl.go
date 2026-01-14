@@ -4,16 +4,21 @@ import (
 	"github.com/hardikm9850/GoChat/internal/auth/repository"
 	"github.com/hardikm9850/GoChat/internal/contacts/domain"
 	"strings"
+	dto "github.com/hardikm9850/GoChat/internal/contacts/handler/dto"
 )
 
 type ContactServiceImpl struct {
 	userRepository repository.UserRepository
 }
 
-func (c *ContactServiceImpl) SyncContacts(contacts []string) ([]domain.ContactDTO, error) {
-	contacts = normalizePhones(contacts)
+func (c *ContactServiceImpl) SyncContacts(userID string, request dto.SyncContactsRequest) ([]domain.ContactDTO, error) {
+	phoneKeys := normalizeContacts(request.Contacts)
 
-	users, err := c.userRepository.FindByMobiles(contacts)
+	if len(phoneKeys) == 0 {
+		return []domain.ContactDTO{}, nil
+	}
+
+	users, err := c.userRepository.FindByMobiles(phoneKeys)
 	if err != nil {
 		return nil, err
 	}
@@ -32,25 +37,35 @@ func New(userRepository repository.UserRepository) ContactService {
 	}
 }
 
-func normalizePhones(input []string) []string {
-	set := map[string]struct{}{}
+// Normalize and dedup contacts
+func normalizeContacts(input []dto.ContactPayload) []domain.PhoneKey {
+	set := make(map[string]domain.PhoneKey)
 
-	for _, p := range input {
-		cleaned := strings.TrimSpace(p)
-		cleaned = strings.ReplaceAll(cleaned, " ", "")
-		cleaned = strings.ReplaceAll(cleaned, "-", "")
-		cleaned = strings.ReplaceAll(cleaned, "(", "")
-		cleaned = strings.ReplaceAll(cleaned, ")", "")
+	for _, c := range input {
+		phone := normalizePhone(c.Phone)
+		code := strings.TrimSpace(c.CountryCode)
 
-		if cleaned != "" {
-			set[cleaned] = struct{}{}
+		if phone == "" || code == "" {
+			continue
+		}
+		key := code + phone
+		set[key] = domain.PhoneKey{
+			CountryCode: code,
+			Phone:       phone,
 		}
 	}
-
-	phones := make([]string, 0, len(set))
-	for p := range set {
-		phones = append(phones, p)
+	res := make([]domain.PhoneKey, len(set))
+	for _, v := range set {
+		res = append(res, v)
 	}
+	return res
+}
 
-	return phones
+func normalizePhone(phone string) string {
+	phone = strings.TrimSpace(phone)
+	phone = strings.ReplaceAll(phone, " ", "")
+	phone = strings.ReplaceAll(phone, "-", "")
+	phone = strings.ReplaceAll(phone, "(", "")
+	phone = strings.ReplaceAll(phone, ")", "")
+	return phone
 }

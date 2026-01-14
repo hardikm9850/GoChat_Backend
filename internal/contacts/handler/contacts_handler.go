@@ -3,7 +3,7 @@ package http
 import (
 	"github.com/hardikm9850/GoChat/internal/contacts/service"
 	"net/http"
-
+	dto "github.com/hardikm9850/GoChat/internal/contacts/handler/dto"
 	"github.com/gin-gonic/gin"
 )
 
@@ -28,16 +28,19 @@ func NewContactsHandler(contactService service.ContactService) *ContactsHandler 
 // @Failure 500 {object} map[string]string "Failed to sync contacts"
 // @Router /contacts/sync [post]
 func (h *ContactsHandler) SyncContacts(c *gin.Context) {
-	var req SyncContactsRequest
+	var req dto.SyncContactsRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "invalid request body",
+			"error": "invalid request payload",
 		})
 		return
 	}
 
-	contacts, err := h.contactService.SyncContacts(req.Phones)
+	userID := c.GetString("user_id")
+
+	resp, err := h.contactService.SyncContacts(userID, req)
+
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "failed to sync contacts",
@@ -45,5 +48,5 @@ func (h *ContactsHandler) SyncContacts(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, contacts)
+	c.JSON(http.StatusOK, resp)
 }
