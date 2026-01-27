@@ -8,6 +8,6 @@ type ContactDTO struct {
 }
 
 type SyncContactsResponse struct {
-	RegisteredUsers []ContactDTO `json:"matched_users"`
+	RegisteredUsers []ContactDTO `json:"users"`
 	Timestamp       int64        `json:"timestamp"`
 }

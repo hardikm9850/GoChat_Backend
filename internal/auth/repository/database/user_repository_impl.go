@@ -29,6 +29,7 @@ func (r *UserRepository) Create(user domain.User) error {
 		PasswordHash:    user.PasswordHash,
 		PhoneNumberHash: user.PhoneHash,
 		CreatedAt:       user.CreatedAt,
+		CountryCode:     user.CountryCode,
 	}
 	err := r.db.Create(&model).Error
 	if err != nil && isDuplicateKeyError(err) {

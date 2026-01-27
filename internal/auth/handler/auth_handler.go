@@ -33,9 +33,10 @@ type loginRequest struct {
 	CountryCode string `json:"country_code" binding:"required"`
 }
 
-type loginResponse struct {
+type authResponse struct {
 	AccessToken  string `json:"access_token"`
 	RefreshToken string `json:"refresh_token"`
+	UserID       string `json:"user_id"`
 }
 
 // refreshRequest represents refresh token request
@@ -79,13 +80,15 @@ func (h *AuthHandler) Register(c *gin.Context) {
 			c.JSON(http.StatusConflict, gin.H{"error": err.Error()})
 			return
 		}
+		log.Printf("Received error %s\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "registration failed"})
 		return
 	}
 
-	c.JSON(http.StatusOK, loginResponse{
+	c.JSON(http.StatusOK, authResponse{
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
+		UserID:       tokens.UserID,
 	})
 }
 
@@ -95,7 +98,7 @@ func (h *AuthHandler) Register(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param loginRequest body loginRequest true "Login Request"
-// @Success 200 {object} loginResponse "Access token returned"
+// @Success 200 {object} authResponse "Access token returned"
 // @Failure 400 {object} map[string]string "Validation error"
 // @Failure 401 {object} map[string]string "Invalid credentials"
 // @Failure 500 {object} map[string]string "Login failed"
@@ -125,7 +128,7 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, loginResponse{
+	c.JSON(http.StatusOK, authResponse{
 		AccessToken:  tokens.AccessToken,
 		RefreshToken: tokens.RefreshToken,
 	})

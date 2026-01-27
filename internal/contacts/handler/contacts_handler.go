@@ -1,10 +1,12 @@
 package http
 
 import (
-	"github.com/hardikm9850/GoChat/internal/contacts/service"
-	"net/http"
-	dto "github.com/hardikm9850/GoChat/internal/contacts/handler/dto"
 	"github.com/gin-gonic/gin"
+	dto "github.com/hardikm9850/GoChat/internal/contacts/handler/dto"
+	"github.com/hardikm9850/GoChat/internal/contacts/service"
+	"github.com/hardikm9850/authkit/middleware"
+	"log"
+	"net/http"
 )
 
 type ContactsHandler struct {
@@ -36,8 +38,9 @@ func (h *ContactsHandler) SyncContacts(c *gin.Context) {
 		})
 		return
 	}
+	log.Printf("SyncContacts invoked")
 
-	userID := c.GetString("user_id")
+	userID := c.GetString(middleware.ContextUserIDKey)
 
 	resp, err := h.contactService.SyncContacts(userID, req)
 
@@ -47,6 +50,6 @@ func (h *ContactsHandler) SyncContacts(c *gin.Context) {
 		})
 		return
 	}
-
+	log.Printf("SyncContacts total users found %d", len(resp.RegisteredUsers))
 	c.JSON(http.StatusOK, resp)
 }

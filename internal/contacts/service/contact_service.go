@@ -8,5 +8,5 @@ import (
 type ContactService interface {
 	// SyncContacts takes a list of phone numbers from the client
 	// and returns registered users as DTOs
-	SyncContacts(userID string, request dto.SyncContactsRequest) ([]domain.ContactDTO, error)
+	SyncContacts(userID string, request dto.SyncContactsRequest) (domain.SyncContactsResponse, error)
 }

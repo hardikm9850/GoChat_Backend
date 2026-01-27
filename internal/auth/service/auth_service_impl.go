@@ -3,15 +3,15 @@ package service
 import (
 	"errors"
 	"fmt"
-	"github.com/hardikm9850/GoChat/internal/auth/domain"
-	"log"
-	"time"
-	internalDomain "github.com/hardikm9850/GoChat/internal/domain"
 	"github.com/google/uuid"
 	auth "github.com/hardikm9850/GoChat/internal/auth"
+	"github.com/hardikm9850/GoChat/internal/auth/domain"
 	"github.com/hardikm9850/GoChat/internal/auth/repository"
+	internalDomain "github.com/hardikm9850/GoChat/internal/domain"
 	authkitjwt "github.com/hardikm9850/authkit/jwt"
 	authkitpassword "github.com/hardikm9850/authkit/password"
+	"log"
+	"time"
 )
 
 type authService struct {
@@ -39,8 +39,14 @@ func New(
 func (s *authService) Register(countryCode, phone, password, name string) (Tokens, error) {
 	log.Println("Service /auth/register hit")
 
+	countryCode, err := internalDomain.NormalizeCountryCode(countryCode)
+	if err != nil {
+		return Tokens{}, err
+	}
+
 	// check if user exists
-	_, err := s.userRepo.FindByMobile(phone, countryCode)
+	_, err = s.userRepo.FindByMobile(phone, countryCode)
+	log.Println("FindByMobile initial")
 	if err == nil {
 		return Tokens{}, auth.ErrUserAlreadyExists
 	}
@@ -60,16 +66,21 @@ func (s *authService) Register(countryCode, phone, password, name string) (Token
 		PasswordHash: hashedPassword,
 		PhoneHash:    phoneHash,
 		CreatedAt:    time.Now(),
+		CountryCode:  countryCode,
 	}
 
 	err = s.userRepo.Create(user)
+	log.Println("Error creating user")
 	if err != nil {
 		return Tokens{}, err
 	}
+	log.Println("FindByMobile after creating user")
 	user, err = s.userRepo.FindByMobile(phone, countryCode)
 	if err != nil {
+		log.Printf("FindByMobile error is %s\n", err)
 		return Tokens{}, err
 	}
+
 	accessToken, err := s.jwtManager.GenerateAccessToken(user.ID)
 	if err != nil {
 		return Tokens{}, fmt.Errorf("generate jwt: %w", err)
